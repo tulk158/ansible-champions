@@ -1,0 +1,32 @@
+- name: static_playbook
+  hosts: static
+  gather_facts: false
+  remote_user: ansible
+  tasks:
+  - name: nginx installed
+    apt:
+      name: nginx
+      state: present
+      update_cache: yes
+    become: true
+
+  - name: nginx config copied
+    copy:
+      src: nginx-champions.conf
+      dest: /etc/nginx/conf.d/champions.conf
+    become: true
+    register: nginx_config
+
+  - name: nginx systemd module restarted
+    systemd:
+      name: nginx
+      state: restarted
+      enabled: yes
+    become: true
+    when: nginx_config.changed
+
+  - name: static index.html rendered
+    template:
+      src: nginx-index.html.j2
+      dest: /var/www/html/index.html
+    become: true
